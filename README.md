@@ -110,18 +110,14 @@ Open-Meteo publishes its own PM2.5 forecast. The daily log stores it next to thi
 
 
 
-&#x20;   uv sync
-
-&#x20;   uv run python src/fetch\_data.py      # download history
-
-&#x20;   uv run python src/clean\_data.py
-
-&#x20;   uv run python src/features.py
-
-&#x20;   uv run python src/log\_forecast.py    # make and log a forecast
-
-&#x20;   uv run streamlit run src/dashboard.py
-
+uv sync
+uv run python src/fetch_data.py       # download hourly history
+uv run python src/fetch_prev.py       # download day-before weather forecasts
+uv run python src/clean_data.py
+uv run python src/features.py
+uv run python src/train_final.py      # train and save the models
+uv run python src/log_forecast.py     # make and log a forecast
+uv run streamlit run src/dashboard.py
 
 
 Author: Spencer Antonio
