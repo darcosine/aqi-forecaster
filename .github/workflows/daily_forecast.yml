@@ -1,0 +1,40 @@
+name: Daily forecast
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 00:30 UTC = 06:00 India time
+  workflow_dispatch:        # lets us start it by hand for testing
+
+permissions:
+  contents: write           # needed to commit the log back to the repo
+
+concurrency:
+  group: forecast-log
+  cancel-in-progress: false
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Log forecast
+        run: uv run --frozen python src/log_forecast.py
+
+      - name: Commit the log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add logs/forecast_log.csv
+          git diff --cached --quiet || git commit -m "Add forecast log rows"
+          git push
