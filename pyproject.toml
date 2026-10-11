@@ -12,6 +12,7 @@ dependencies = [
     "pyarrow>=26.0.0",
     "requests>=2.34.2",
     "scikit-learn>=1.9.1",
+    "streamlit>=1.59.1",
 ]
 [tool.uv.workspace]
 members = []
