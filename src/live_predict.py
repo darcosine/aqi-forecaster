@@ -4,11 +4,25 @@ import time
 import joblib
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from features import FEATURES
 from fetch_data import CITIES
 from live_features import make_features
 from modeldata import FC, predict_range
+
+# Retry timeouts, connection errors and server-side errors, pausing longer each time
+SESSION = requests.Session()
+SESSION.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=4, connect=4, read=4, status=4, backoff_factor=5,
+    status_forcelist=[429, 500, 502, 503, 504], allowed_methods=["GET"])))
+
+
+def get(url, params):
+    r = SESSION.get(url, params=params, timeout=(20, 60))
+    r.raise_for_status()
+    return r
 
 
 def forecast_now():
@@ -22,14 +36,11 @@ def forecast_now():
     for city, (lat, lon) in CITIES.items():
         common = dict(latitude=lat, longitude=lon, past_days=5, forecast_days=2,
                       timezone="Asia/Kolkata")
-        aq = requests.get("https://air-quality-api.open-meteo.com/v1/air-quality",
-                          params=dict(common, hourly="pm2_5,pm10"), timeout=60)
-        wx = requests.get("https://api.open-meteo.com/v1/forecast",
-                          params=dict(common, hourly="temperature_2m,relative_humidity_2m,"
-                                                     "wind_speed_10m,precipitation"),
-                          timeout=60)
-        aq.raise_for_status()
-        wx.raise_for_status()
+        aq = get("https://air-quality-api.open-meteo.com/v1/air-quality",
+                 dict(common, hourly="pm2_5,pm10"))
+        wx = get("https://api.open-meteo.com/v1/forecast",
+                 dict(common, hourly="temperature_2m,relative_humidity_2m,"
+                                     "wind_speed_10m,precipitation"))
 
         full = pd.DataFrame(aq.json()["hourly"]).merge(
             pd.DataFrame(wx.json()["hourly"]), on="time")
