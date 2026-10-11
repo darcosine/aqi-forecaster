@@ -33,8 +33,9 @@ st.caption(f"Forecast made at {latest['made_at'].max():%d %b %Y, %H:%M} India ti
 cols = st.columns(4)
 for i, r in latest.iterrows():
     with cols[i % 4]:
+        change = r["median"] - r["pm25_now"]
         st.metric(r["city"].title(), f"{r['median']:.0f} µg/m³",
-                  f"now {r['pm25_now']:.0f}", delta_color="off")
+                  f"{change:+.0f} vs now ({r['pm25_now']:.0f})", delta_color="off")
         st.write(f"**{category(r['median'])}**")
         st.caption(f"Range {r['low']:.0f} to {r['high']:.0f}")
 
@@ -54,6 +55,8 @@ ax.set_xlabel("PM2.5 (µg/m³)")
 ax.grid(axis="x", alpha=0.3)
 ax.legend(loc="lower right")
 st.pyplot(fig)
+st.caption("Labels use CPCB PM2.5 bands, which are defined for 24-hour averages. "
+           "This is a single-hour forecast, so treat the labels as approximate.")
 
 with st.expander("How to read this"):
     st.markdown(
